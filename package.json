@@ -1,0 +1,19 @@
+{
+  "name": "dyan-nodejs",
+  "version": "1.0.0",
+  "description": "c",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dyan",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "clear"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mocha": "^10.2.0"
+  }
+}

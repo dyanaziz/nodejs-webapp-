@@ -1,52 +1,53 @@
 pipeline {
     agent any 
 
-     options {
+    options {
         timeout(time: 10, unit: 'MINUTES')
-     }
-    environment {
-    ACR_NAME = "dyanxazizacr"
-    registryUrl = "dyanxazizacr.azurecr.io"
-    IMAGE_NAME = "nodejswebapp"
-    IMAGE_TAG = "v1.0.0"
-    registryCredential  = "dyanxazizacr"
     }
+
+    environment {
+        ACR_NAME = "dyanxazizacr"
+        registryUrl = "dyanxazizacr.azurecr.io"
+        IMAGE_NAME = "nodejswebapp"
+        IMAGE_TAG = "v1.0.0"
+        registryCredential = "dyanxazizacr"
+        SONAR_PROJECT_KEY = "unique_project_key" // Define your project's unique key here
+    }
+
     stages { 
         stage('SCM Checkout') {
-            steps{
-           git branch: 'main', url: 'https://github.com/dyanaziz/nodejs-webapp-.git'
+            steps {
+                git branch: 'main', url: 'https://github.com/dyanaziz/nodejs-webapp-.git'
             }
         }
-        run sonarqube test
-        // stage('Run Sonarqube') {
-        //     environment {
-        //         scannerHome = tool 'ibt-sonarqube';
-        //     }
-        //     steps {
-        //       withSonarQubeEnv(credentialsId: 'ibt-sonar', installationName: 'IBT sonarqube') {
-        //         sh "${scannerHome}/bin/sonar-scanner"
-        //       }
-        //     }
-        // }
-       // Building Docker Image 
-       stage ('Build Docker image') {
-        steps {
+
+        stage('Run Sonarqube') {
+            steps {
                 script {
-                    //dockerImage = docker.build registryUrl
-                 def dockerImage = docker.build("${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}", '.') 
+                    sh """
+                        /var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/ibt-sonarqube/bin/sonar-scanner \
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+                    """
                 }
             }
-       } 
-    // Uploading Docker images into ACR
+        }
+
+        stage ('Build Docker image') {
+            steps {
+                script {
+                    def dockerImage = docker.build("${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}", '.')
+                }
+            }
+        }
+
         stage('Upload Image to ACR') {
-         steps{   
-             script {
-                 docker.withRegistry( "dyanxazizacr.azurecr.io", registryCredential ) {
-               // dockerImage.push()
-              sh " docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
-                  }
-              }
-         }
-      }
+            steps {   
+                script {
+                    docker.withRegistry("dyanxazizacr.azurecr.io", registryCredential) {
+                        sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
     }
 }
